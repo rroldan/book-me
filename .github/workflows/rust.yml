@@ -1,0 +1,54 @@
+name: Rust CI
+
+on:
+  push:
+    branches: [ "main" ] # Or your default branch
+  pull_request:
+    branches: [ "main" ] # Or your default branch
+
+env:
+  CARGO_TERM_COLOR: always
+  # Set DATABASE_URL for cargo build/test if any compile-time checks need it,
+  # though our current setup initializes DB at runtime.
+  # Testcontainers will override this for integration tests.
+  # DATABASE_URL: sqlite:messages.db # Example, not strictly needed for tests as is
+
+jobs:
+  build_and_test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./axum_app # Adjust if your Cargo.toml is not in a subdir
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker # Added back as per refined instructions
+      uses: shivammathur/setup-docker
+      # No specific with: options needed for basic Testcontainers usage on GH runners
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        toolchain: '1.82.0' # Explicitly set to version that should work
+
+    - name: Cache Cargo registry and index
+      uses: actions/cache@v4 # Updated to v4
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/ # This will be axum_app/target due to working-directory
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-
+
+    - name: Build
+      run: cargo build --verbose
+
+    - name: Test
+      run: cargo test --verbose -- --test-threads=1
