@@ -25,10 +25,6 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up Docker # Added back as per refined instructions
-      uses: shivammathur/setup-docker
-      # No specific with: options needed for basic Testcontainers usage on GH runners
-
     - name: Install Rust toolchain
       uses: dtolnay/rust-toolchain@stable
       with:
